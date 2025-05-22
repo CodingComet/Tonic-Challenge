@@ -105,19 +105,22 @@ def count_server_occurences(servers: list[str]):
     return no_associated_servers, occurences
 
 
-# fetch_all_issues()
-server_names = ["srv-a", "srv-1", "srv-database3", "srv-00623"]
-no_server_mentioned, occurences = count_server_occurences(server_names)
+def render_results():
+    server_names = ["srv-a", "srv-1", "srv-database3", "srv-00623"]
+    no_server_mentioned, occurences = count_server_occurences(server_names)
 
 
-all_titles = np.append(server_names, "NO SERVER MENTIONED")
-all_amounts = np.append(occurences, no_server_mentioned)
+    all_titles = np.append(server_names, "NO SERVER MENTIONED")
+    all_amounts = np.append(occurences, no_server_mentioned)
 
-# Bar colors: blue for existing, red for extra
-colors = ["blue"] * len(occurences) + ["red"]
+    # Bar colors: blue for existing, red for extra
+    colors = ["blue"] * len(occurences) + ["red"]
 
-# Plotting
-plt.bar(all_titles, all_amounts, color=colors)
-plt.ylabel("#")
-plt.title("Mentions of Each Server")
-plt.show()
+    # Plotting
+    plt.bar(all_titles, all_amounts, color=colors)
+    plt.ylabel("#")
+    plt.title("Mentions of Each Server")
+    plt.show()
+
+if __name__ == "__main__":
+    render_results()
