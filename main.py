@@ -88,7 +88,7 @@ def fetch_all_issues(max_results: int = 8):
 
 
 def count_server_occurences(servers: list[str]):
-    all_descriptions = fetch_all_issues(50)
+    all_descriptions = fetch_all_issues(8)
 
     no_associated_servers = 0
     occurences = np.zeros(len(servers))
