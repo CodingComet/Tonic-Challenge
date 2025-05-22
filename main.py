@@ -5,6 +5,44 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 
+import signal
+import sys
+import json
+
+terminate_requested = False
+
+
+def handle_termination(signum, frame):
+    global terminate_requested
+    print(
+        f"\n[!] Termination requested (signal {signum}) — stopping after current batch..."
+    )
+    terminate_requested = True
+
+
+# Register signal handlers
+signal.signal(signal.SIGINT, handle_termination)  # Ctrl+C
+signal.signal(signal.SIGTERM, handle_termination)  # kill
+
+
+PROGRESS_FILE = "sync_checkpoint.json"
+
+
+def load_checkpoint():
+    try:
+        if os.path.exists(PROGRESS_FILE):
+            with open(PROGRESS_FILE, "r") as f:
+                return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"[!] Didn't load checkpoint: {e}")
+    return []
+
+
+def save_checkpoint(descriptions):
+    with open(PROGRESS_FILE, "w") as f:
+        json.dump(descriptions, f)
+
+
 # === CONFIGURATION ===
 load_dotenv()
 
@@ -28,20 +66,29 @@ def fetch_issues(start_at: int, max_results: int):
 
 
 def fetch_all_issues(max_results: int = 8):
-    issues = []
-    start_at = 0
+    all_descriptions = load_checkpoint()
+    if all_descriptions == []:
+        start_at = 0
+    else:
+        start_at = len(all_descriptions)
+
     while True:
+        if terminate_requested:
+            save_checkpoint(all_descriptions)
+
+            sys.exit()
+
         last_issues = fetch_issues(start_at, max_results)
         if not last_issues:
             break
-        issues.extend(last_issues)
+        
+        all_descriptions += [issue.fields.description for issue in last_issues]
         start_at += max_results
-    return issues
+    return all_descriptions
 
 
 def count_server_occurences(servers: list[str]):
-    all_issues = fetch_all_issues(50)
-    all_descriptions = [issue.fields.description for issue in all_issues]
+    all_descriptions = fetch_all_issues(50)
 
     no_associated_servers = 0
     occurences = np.zeros(len(servers))
