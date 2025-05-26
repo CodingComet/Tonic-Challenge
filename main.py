@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import signal
 import sys
 import json
+from config import *
 
 terminate_requested = False
 
@@ -23,10 +24,6 @@ def handle_termination(signum, frame):
 # Register signal handlers
 signal.signal(signal.SIGINT, handle_termination)  # Ctrl+C
 signal.signal(signal.SIGTERM, handle_termination)  # kill
-
-
-PROGRESS_FILE = "sync_checkpoint.json"
-
 
 def load_checkpoint():
     try:
@@ -65,7 +62,7 @@ def fetch_issues(start_at: int, max_results: int):
     return issues
 
 
-def fetch_all_issues(max_results: int = 8):
+def fetch_all_issues(max_results: int = 50):
     all_descriptions = load_checkpoint()
     if all_descriptions == []:
         start_at = 0
@@ -88,7 +85,7 @@ def fetch_all_issues(max_results: int = 8):
 
 
 def count_server_occurences(servers: list[str]):
-    all_descriptions = fetch_all_issues(8)
+    all_descriptions = fetch_all_issues(PAGE_SIZE)
 
     no_associated_servers = 0
     occurences = np.zeros(len(servers))
@@ -96,7 +93,7 @@ def count_server_occurences(servers: list[str]):
     for description in all_descriptions:
         lower = description.lower()
         associated = np.array(
-            [lower.count(server_name) for server_name in server_names]
+            [lower.count(server_name) for server_name in servers]
         )
         if np.all(associated == 0):
             no_associated_servers += 1
@@ -106,11 +103,9 @@ def count_server_occurences(servers: list[str]):
 
 
 def render_results():
-    server_names = ["srv-a", "srv-1", "srv-database3", "srv-00623"]
-    no_server_mentioned, occurences = count_server_occurences(server_names)
+    no_server_mentioned, occurences = count_server_occurences(PREDEFINED_SERVERS)
 
-
-    all_titles = np.append(server_names, "NO SERVER MENTIONED")
+    all_titles = np.append(PREDEFINED_SERVERS, "NO SERVER MENTIONED")
     all_amounts = np.append(occurences, no_server_mentioned)
 
     # Bar colors: blue for existing, red for extra
